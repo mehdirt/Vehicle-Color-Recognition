@@ -5,6 +5,35 @@ import torchvision.models as models
 
 use_gpu = torch.cuda.is_available()
 
+def load_pretrained_mobilenetv3_small(model_path=None, num_classes=10):
+    if model_path is None:
+        # Load pretrained MobileNetV3-Small
+        model = models.mobilenet_v3_small(pretrained=True)
+        
+        # Freeze all parameters
+        for param in model.parameters():
+            param.requires_grad = False
+            
+        # Modify classifier head
+        num_ftrs = model.classifier[-1].in_features
+        model.classifier[-1] = nn.Linear(num_ftrs, num_classes)
+    else:
+        # Load model architecture without pretrained weights
+        model = models.mobilenet_v3_small(pretrained=False)
+        
+        # Modify classifier head
+        num_ftrs = model.classifier[-1].in_features
+        model.classifier[-1] = nn.Linear(num_ftrs, num_classes)
+        
+        # Load custom weights
+        model.load_state_dict(torch.load(model_path))
+    
+    # Move to GPU if available
+    if use_gpu:
+        model = model.cuda()
+        
+    return model
+
 def load_pretrained_resnet18(model_path=None, num_classes=10):
     if model_path is None:
         model = models.resnet18(pretrained=True)
