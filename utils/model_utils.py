@@ -5,6 +5,26 @@ import torchvision.models as models
 
 use_gpu = torch.cuda.is_available()
 
+def load_finetuned_resnet18(model_path=None, num_classes=15, use_gpu=False):
+    # Initialize a new ResNet18 model
+    model = models.resnet18(pretrained=False)  # Ensure it's False to avoid overwriting your weights
+
+    # Modify the classifier (fully connected layer) to match your num_classes
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, num_classes)
+
+    # Load saved weights if provided
+    if model_path is not None:
+        model.load_state_dict(torch.load(model_path, map_location="cuda" if use_gpu else "cpu"))
+        print("Model weights loaded successfully!")
+
+    # Move model to GPU if specified and available
+    if use_gpu and torch.cuda.is_available():
+        model = model.cuda()
+
+    model.eval()  # Set the model to evaluation mode
+    return model
+
 def load_pretrained_mobilenetv3_small(model_path=None, num_classes=10):
     if model_path is None:
         # Load pretrained MobileNetV3-Small
